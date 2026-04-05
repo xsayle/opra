@@ -2,138 +2,274 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>SAMP Opra PRO | Final Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMP Opra PRO | Redesign</title>
     <style>
-        :root { --bg: #050505; --card: #121212; --primary: #eb4d4b; --secondary: #6ab04c; --accent: #f0932b; --blue: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #eee; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        
-        /* Стили уведомления об обновлении */
-        #updateNotice {
-            display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;
-            background: var(--accent); color: #000; padding: 15px 25px; border-radius: 10px;
-            box-shadow: 0 0 20px rgba(240, 147, 43, 0.5); font-weight: bold; animation: slideIn 0.5s ease;
+        :root {
+            --bg: #0f0c29;
+            --gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --primary: #a29bfe;
+            --secondary: #00cec9;
+            --accent: #fab1a0;
+            --danger: #ff7675;
+            --text: #dfe6e9;
         }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            background: var(--gradient);
+            background-attachment: fixed;
+            color: var(--text);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Уведомление */
+        #updateNotice {
+            display: none; position: fixed; top: 20px; z-index: 1000;
+            background: var(--secondary); color: #000; padding: 12px 24px; 
+            border-radius: 50px; box-shadow: 0 10px 30px rgba(0, 206, 201, 0.3);
+            font-weight: 600; animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown { from { transform: translateY(-100px); } to { transform: translateY(0); } }
+
+        /* Модальное окно */
         #rulesModal {
             display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.96); backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
         }
         .modal-content {
-            background-color: #1a1a1a; margin: 2% auto; padding: 30px; border: 1px solid var(--accent);
-            width: 80%; max-width: 900px; border-radius: 15px; box-shadow: 0 0 40px rgba(240, 147, 43, 0.2);
-            max-height: 90vh; overflow-y: auto;
+            background: #1e1e2e; margin: 5% auto; padding: 40px; border-radius: 24px;
+            width: 90%; max-width: 700px; border: 1px solid rgba(255,255,255,0.1);
+            max-height: 80vh; overflow-y: auto; text-align: left;
         }
-        .close-btn { color: #aaa; float: right; font-size: 28px; cursor: pointer; }
-        
-        .main-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; }
-        .video-section { flex: 3; min-width: 600px; display: flex; flex-direction: column; gap: 15px; }
-        .video-container { width: 100%; border-radius: 12px; border: 1px solid #333; overflow: hidden; background: #000; }
+
+        /* Основной контейнер */
+        .wrapper {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            align-items: center; /* Выравнивание элементов по центру */
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 16px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Стили для блока FPS */
+        .fps-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .fps-label {
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .video-section {
+            width: 100%;
+            max-width: 850px;
+        }
+
+        .video-container {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
         video { width: 100%; display: block; }
 
-        .stats-section { flex: 1; min-width: 350px; background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid #222; position: sticky; top: 20px; height: fit-content; }
-        .controls { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #222; display: grid; gap: 12px; }
-        .row { display: flex; gap: 10px; }
-        
-        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; background: #2a2a2a; flex: 1; }
-        button:hover { background: #444; }
-        
-        .btn-start { background: var(--primary); font-size: 18px; }
-        .btn-log { background: var(--secondary); font-size: 18px; padding: 18px; }
-        .btn-rules { background: var(--accent); color: #000; font-size: 13px; padding: 0 15px; flex: 0 1 auto; height: 42px; }
-        
-        .line { border-bottom: 1px solid #222; padding: 8px 0; color: #fff; font-family: monospace; font-size: 15px; }
-        .section-title { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; margin: 20px 0 10px; font-size: 18px; text-transform: uppercase; }
-        .hint-red { color: #ff4757; font-size: 11px; text-align: center; font-weight: bold; margin-top: 4px; }
+        .controls {
+            margin-top: 20px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Сетка кнопок */
+        .row { display: flex; gap: 10px; justify-content: center; width: 100%; }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+
+        .btn-start { background: var(--primary) !important; color: #000 !important; font-size: 14px; }
+        .btn-log { background: var(--secondary) !important; color: #000 !important; font-size: 14px; margin-top: 10px; }
+        .btn-rules { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .btn-file { background: #6c5ce7; height: 100%; } /* Высота 100% для выравнивания с селектом */
+
+        /* Секция статистики */
+        .stats-section {
+            width: 100%;
+            max-width: 850px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .line {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #finalResult {
+            font-size: 28px;
+            margin: 20px 0;
+            color: var(--secondary);
+            text-shadow: 0 0 15px rgba(0, 206, 201, 0.4);
+        }
+
+        select {
+            background: #2d3436;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        kbd {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .hint-red { color: var(--danger); font-size: 12px; opacity: 0.8; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div id="updateNotice">
-    🚀 Доступно обновление! Нажмите CTRL + F5 для загрузки новой версии.
-    <button onclick="this.parentElement.style.display='none'" style="margin-left:10px; padding:2px 10px; background:#000; font-size:10px;">OK</button>
+    🚀 Доступно обновление! Нажмите CTRL + F5
+    <button onclick="this.parentElement.style.display='none'" style="margin-left:15px; background:#000; color:#fff; border-radius: 50%;">✕</button>
+</div>
+
+<div class="wrapper">
+    <div class="header-controls">
+        <button class="btn-file" onclick="document.getElementById('vidFile').click()">📁 Выбрать видео</button>
+        <input type="file" id="vidFile" accept="video/*" style="display: none;">
+        
+        <div class="fps-wrapper">
+            <span class="fps-label">Сколько ФПС на опре?</span>
+            <select id="fps">
+                <option value="60">60 FPS (0.017)</option>
+                <option value="30">30 FPS (0.034)</option>
+            </select>
+        </div>
+        
+        <button class="btn-rules" onclick="openRules()">📖 Инструкция</button>
+    </div>
+
+    <div class="main-layout">
+        <div class="video-section">
+            <div class="video-container">
+                <video id="v" controls crossorigin="anonymous"></video>
+            </div>
+            
+            <div class="controls">
+                <div class="row">
+                    <button onclick="v.currentTime -= 1">« -1 сек</button>
+                    <button onclick="step(-1)">-1к <kbd>&lt;</kbd></button>
+                    <button onclick="step(1)">+1к <kbd>&gt;</kbd></button>
+                    <button onclick="step(5)">+5к</button>
+                    <button onclick="v.currentTime += 1">+1 сек »</button>
+                </div>
+
+                <div id="liveFrameDisplay" style="text-align:center; color:var(--accent); font-weight: bold;">
+                    Кадров: <span id="frameCounter">0</span>
+                </div>
+
+                <div class="row" style="margin-top: 10px;">
+                    <div style="flex: 2; text-align: center;">
+                        <button class="btn-start" style="width: 100%;" onclick="setStart()">Установить старт (S)</button>
+                        <div class="hint-red">Появление капчи + 1 кадр вперед</div>
+                    </div>
+                    <button style="background: #34495e;" onclick="adjustZero()">Нолик (Z)</button>
+                    <button style="background: #2980b9;" onclick="addFreeze()">Фриз (F)</button>
+                </div>
+
+                <button class="btn-log" id="logBtn" onclick="logSymbol()">Зафиксировать ввод (Enter) <span id="clickCounter"></span></button>
+                <button onclick="reset()" style="background: transparent; color: var(--danger); border: 1px solid var(--danger); font-size: 10px; margin-top: 10px;">Сбросить всё</button>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h3 style="margin-top:0; color: var(--primary);">Лог разбора</h3>
+            <div id="logArea" style="min-height: 50px; opacity: 0.7;">Ожидание действий...</div>
+            <div id="finalResult"></div>
+            <button id="copyBtn" onclick="copyResult()" style="display:none; background:var(--secondary); color:#000; width:100%; max-width: 300px; margin: 0 auto;">Скопировать результат</button>
+        </div>
+    </div>
 </div>
 
 <div id="rulesModal">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeRules()">&times;</span>
-        <h1 style="color: var(--accent); margin: 0;">📖 РЕГЛАМЕНТ И КЛАВИШИ</h1>
-        
-        <div class="section-title">Когда нажимать на СТАРТ?</div>
-        <p>Нажимайте клавишу <kbd>></kbd> до тех пор, пока не появится капча, а затем повторно нажмите еще раз <kbd>></kbd> (2-й кадр). В этот момент жмите <b>S</b>.</p>
-
-        <div class="section-title">Когда нажимать на кнопку "Нолик закрашен"?</div>
-        <p>Если нолик закрашен в начале, то листаем до кадра, когда нолик станет нормальным, после чего нажимаешь на кнопку СТАРТ потом уже <b>«Нолик закрашен (Z)»</b>. Оно заберет 1 кадр к себе в карман.</p>
-
-        <div class="section-title">Когда нажимать на «Фриз»?</div>
-        <p>Если при просмотре капчи капча залагает на 3 кадра подряд, то нажимаешь на кнопку <b>«Фриз 3к (F)»</b>. Оно посчитает это как 1 кадр.</p>
-
-        <div style="background: #222; padding: 10px; border-radius: 8px; margin-top: 15px; font-family: monospace; color: var(--secondary);">
-            60 FPS (0.017) | 30 FPS (0.034)
-        </div>
-        <div style="text-align: center; color: #888; margin-top: 20px;">Нажми <b>H</b> для закрытия</div>
-    </div>
-</div>
-
-<div style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%; max-width: 1400px; align-items: center;">
-    <button onclick="document.getElementById('vidFile').click()" style="background: #4834d4; flex: 0 0 120px; height: 42px;">📁 Файл</button>
-    <input type="file" id="vidFile" accept="video/*" style="display: none;">
-    <select id="fps" style="background:#222; color:#fff; border-radius:8px; padding:0 10px; border: 1px solid #333; flex: 1; height: 42px;">
-        <option value="60">Режим: 60 FPS (0.017)</option>
-        <option value="30">Режим: 30 FPS (0.034)</option>
-    </select>
-    <button class="btn-rules" onclick="openRules()">📖 ИНСТРУКЦИЯ (H)</button>
-</div>
-
-<div class="main-layout">
-    <div class="video-section">
-        <div class="video-container"><video id="v" controls crossorigin="anonymous"></video></div>
-        <div class="controls">
-            <div class="row">
-                <button onclick="v.currentTime -= 1">« -1 сек</button>
-                <button onclick="step(-1)">-1к <kbd>&lt;</kbd></button>
-                <button onclick="step(1)">+1к <kbd>&gt;</kbd></button>
-                <button style="background:#3d3d3d; font-size:11px;" onclick="step(5)">+5к</button>
-                <button onclick="v.currentTime += 1">+1 сек »</button>
-            </div>
-            <div id="liveFrameDisplay" style="text-align:center; color:var(--accent); font-family:monospace; font-size:14px;">Кадров с посл. клика: <span id="frameCounter">0</span></div>
-            <div class="row">
-                <div style="flex: 2; display: flex; flex-direction: column;">
-                    <button class="btn-start" onclick="setStart()">УСТАНОВИТЬ СТАРТ (S)</button>
-                    <div class="hint-red">Появление капчи + ">" один раз</div>
-                </div>
-                <button style="background: #5758bb;" onclick="adjustZero()">Нолик закрашен (Z)</button>
-                <button style="background: var(--blue);" onclick="addFreeze()">Фриз 3к (F)</button>
-            </div>
-            <button class="btn-log" id="logBtn" onclick="logSymbol()">ЗАФИКСИРОВАТЬ ВВОД (Enter) <span id="clickCounter"></span></button>
-            <button onclick="reset()" style="background: #333; font-size: 13px; color: #ff4757;">СБРОСИТЬ ВСЁ</button>
-        </div>
-    </div>
-
-    <div class="stats-section">
-        <h3 style="margin:0 0 10px 0; color:var(--secondary);">Отчет разбора</h3>
-        <div id="logArea">Ожидание...</div>
-        <div id="finalResult" style="margin-top:15px; font-size:22px; font-weight:bold; text-align:center; color:var(--primary); border-top: 1px solid #333; padding-top:10px;"></div>
-        <button id="copyBtn" onclick="copyResult()" style="display:none; background:var(--blue); margin-top:15px; width:100%;">СКОПИРОВАТЬ ОТЧЕТ</button>
+        <span onclick="closeRules()" style="float:right; cursor:pointer; font-size: 24px;">&times;</span>
+        <h2 style="color: var(--primary);">📖 Регламент</h2>
+        <p>1. <b>СТАРТ (S):</b> Когда появилась капча, сделайте +1 кадр вперед и жмите S.</p>
+        <p>2. <b>Нолик (Z):</b> Если 0 закрашен изначально, мотаем до нормального, жмем старт, потом Z.</p>
+        <p>3. <b>Фриз (F):</b> Если залагало на 3 кадра — жмите F (считает как 1).</p>
+        <div style="text-align:center; margin-top:30px;"><button onclick="closeRules()">Понятно</button></div>
     </div>
 </div>
 
 <script>
-    const VERSION = "1.0"; // Текущая версия твоего кода
-    const VERSION_URL = "ССЫЛКА_НА_ТВОЙ_GITHUB_VERSION.TXT"; // Замени на прямую ссылку (Raw)
-
-    // Функция проверки обновлений
-    async function checkUpdates() {
-        try {
-            const response = await fetch(VERSION_URL);
-            const latestVersion = await response.text();
-            if(latestVersion.trim() !== VERSION) {
-                document.getElementById('updateNotice').style.display = 'block';
-            }
-        } catch(e) { console.log("Ошибка проверки обновлений"); }
-    }
-    // checkUpdates(); // Раскомментируй, когда загрузишь файл на GitHub
-
     const v = document.getElementById('v');
     const out = document.getElementById('logArea');
     const resDiv = document.getElementById('finalResult');
@@ -171,7 +307,7 @@
         startT = v.currentTime; lastT = startT; count = 0; freezeCorr = 0; historyText = "";
         resDiv.innerText = "";
         document.getElementById('clickCounter').innerText = `(0/6)`;
-        out.innerHTML = `<div style="color:var(--primary);">Старт: 2-й кадр</div>`;
+        out.innerHTML = `<div style="color:var(--primary);">Старт установлен</div>`;
         document.getElementById('copyBtn').style.display = 'none';
         updateLiveFrames();
     }
@@ -179,13 +315,13 @@
     function adjustZero() {
         if(!startT) return;
         freezeCorr += 1;
-        out.innerHTML += `<div style="color:var(--accent); font-size:13px;">• Нолик в кармане (-1к)</div>`;
+        out.innerHTML += `<div style="color:var(--accent);">• Коррекция: Нолик (-1к)</div>`;
     }
 
     function addFreeze() {
         if(!startT) return;
         freezeCorr += 2; 
-        out.innerHTML += `<div style="color:var(--blue); font-size:13px;">• Фриз (3к за 1к)</div>`;
+        out.innerHTML += `<div style="color:var(--secondary);">• Коррекция: Фриз (3к->1к)</div>`;
     }
 
     function logSymbol() {
@@ -195,18 +331,18 @@
         let diff = Math.round((v.currentTime - lastT) * fps);
         let stepSec = (diff * mult).toFixed(3);
         count++;
-        let label = count <= 5 ? `${count} цифра` : "ентер";
+        let label = count <= 5 ? `${count} цифра` : "Enter";
         if(count === 1) out.innerHTML = "";
-        let lineText = `${label} - ${diff} кадров - ${stepSec}`;
+        let lineText = `<span>${label}</span> <b>${diff} к. (${stepSec}s)</b>`;
         out.innerHTML += `<div class="line">${lineText}</div>`;
-        historyText += lineText + "\n";
+        historyText += `${label} - ${diff} кадров - ${stepSec}\n`;
         lastT = v.currentTime;
         document.getElementById('clickCounter').innerText = `(${count}/6)`;
         updateLiveFrames();
         if(count === 6) {
             let totalF = Math.round((v.currentTime - startT) * fps) - freezeCorr;
             let finalVal = (totalF * mult).toFixed(3);
-            resDiv.innerText = `Итог - ${finalVal}`;
+            resDiv.innerText = `Итог: ${finalVal} сек.`;
             startT = null;
             document.getElementById('copyBtn').style.display = 'block';
         }
