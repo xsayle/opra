@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SAMP Opra PRO | Expert Edition</title>
+    <style>
+        :root { --bg: #050505; --card: #121212; --primary: #eb4d4b; --secondary: #6ab04c; --accent: #f0932b; --blue: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #eee; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        #rulesModal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.96); backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background-color: #1a1a1a; margin: 2% auto; padding: 30px; border: 1px solid var(--accent);
+            width: 80%; max-width: 900px; border-radius: 15px; box-shadow: 0 0 40px rgba(240, 147, 43, 0.2);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .close-btn { color: #aaa; float: right; font-size: 28px; cursor: pointer; }
+        
+        .main-layout { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1400px; justify-content: center; }
+        .video-section { flex: 3; min-width: 600px; display: flex; flex-direction: column; gap: 15px; }
+        .video-container { width: 100%; border-radius: 12px; border: 1px solid #333; overflow: hidden; background: #000; }
+        video { width: 100%; display: block; }
+
+        .stats-section { flex: 1; min-width: 350px; background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid #222; position: sticky; top: 20px; height: fit-content; }
+        .controls { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #222; display: grid; gap: 12px; }
+        .row { display: flex; gap: 10px; }
+        
+        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; background: #2a2a2a; flex: 1; }
+        button:hover { background: #444; }
+        
+        .btn-start { background: var(--primary); font-size: 18px; }
+        .btn-log { background: var(--secondary); font-size: 18px; padding: 18px; }
+        .btn-rules { background: var(--accent); color: #000; font-size: 13px; padding: 0 15px; flex: 0 1 auto; height: 42px; }
+        
+        .line { border-bottom: 1px solid #222; padding: 8px 0; color: #fff; font-family: monospace; font-size: 15px; }
+        .section-title { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 5px; margin: 20px 0 10px; font-size: 18px; text-transform: uppercase; }
+        .hint-red { color: #ff4757; font-size: 11px; text-align: center; font-weight: bold; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="rulesModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeRules()">&times;</span>
+        <h1 style="color: var(--accent); margin: 0;">📖 РЕГЛАМЕНТ И КЛАВИШИ</h1>
+        
+        <div class="section-title">Когда нажимать на СТАРТ?</div>
+        <p>Нажимайте клавишу <kbd>></kbd> до тех пор, пока не появится капча, а затем повторно нажмите еще раз <kbd>></kbd> (2-й кадр). В этот момент жмите <b>S</b>.</p>
+
+        <div class="section-title">Когда нажимать на кнопку "Нолик закрашен"?</div>
+        <p>Если нолик закрашен в начале, то листаем до кадра, когда нолик станет нормальным, после чего нажимаешь на кнопку СТАРТ потом уже <b>«Нолик закрашен (Z)»</b>. Оно заберет 1 кадр к себе в карман, потому что это пролаг первого кадра.</p>
+
+        <div class="section-title">Когда нажимать на «Фриз»?</div>
+        <p>Если при просмотре капчи капча залагает на 3 кадра подряд, то нажимаешь на кнопку <b>«Фриз 3к (F)»</b>. Оно посчитает это как 1 кадр.</p>
+
+        <div style="background: #222; padding: 10px; border-radius: 8px; margin-top: 15px; font-family: monospace; color: var(--secondary);">
+            60 FPS (0.017) | 30 FPS (0.034)
+        </div>
+        
+        <div style="text-align: center; color: #888; margin-top: 20px;">Нажми <b>H</b> или крестик для закрытия</div>
+    </div>
+</div>
+
+<div style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%; max-width: 1400px; align-items: center;">
+    <button onclick="document.getElementById('vidFile').click()" style="background: #4834d4; flex: 0 0 120px; height: 42px;">📁 Файл</button>
+    <input type="file" id="vidFile" accept="video/*" style="display: none;">
+    <select id="fps" style="background:#222; color:#fff; border-radius:8px; padding:0 10px; border: 1px solid #333; flex: 1; height: 42px;">
+        <option value="60">Режим: 60 FPS (0.017)</option>
+        <option value="30">Режим: 30 FPS (0.034)</option>
+    </select>
+    <button class="btn-rules" onclick="openRules()">📖 ИНСТРУКЦИЯ (H)</button>
+</div>
+
+<div class="main-layout">
+    <div class="video-section">
+        <div class="video-container"><video id="v" controls crossorigin="anonymous"></video></div>
+        <div class="controls">
+            <div class="row">
+                <button onclick="v.currentTime -= 1">« -1 сек</button>
+                <button onclick="step(-1)">-1к <kbd>&lt;</kbd></button>
+                <button onclick="step(1)">+1к <kbd>&gt;</kbd></button>
+                <button style="background:#3d3d3d; font-size:11px;" onclick="step(5)">+5к</button>
+                <button onclick="v.currentTime += 1">+1 сек »</button>
+            </div>
+            <div id="liveFrameDisplay" style="text-align:center; color:var(--accent); font-family:monospace; font-size:14px;">Кадров с посл. клика: <span id="frameCounter">0</span></div>
+            <div class="row">
+                <div style="flex: 2; display: flex; flex-direction: column;">
+                    <button class="btn-start" onclick="setStart()">УСТАНОВИТЬ СТАРТ (S)</button>
+                    <div class="hint-red">Появление капчи + ">" один раз</div>
+                </div>
+                <button style="background: #5758bb;" onclick="adjustZero()">Нолик закрашен (Z)</button>
+                <button style="background: var(--blue);" onclick="addFreeze()">Фриз 3к (F)</button>
+            </div>
+            <button class="btn-log" id="logBtn" onclick="logSymbol()">ЗАФИКСИРОВАТЬ ВВОД (Enter) <span id="clickCounter"></span></button>
+            <button onclick="reset()" style="background: #333; font-size: 13px; color: #ff4757;">СБРОСИТЬ ВСЁ</button>
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <h3 style="margin:0 0 10px 0; color:var(--secondary);">Отчет разбора</h3>
+        <div id="logArea">Ожидание...</div>
+        <div id="finalResult" style="margin-top:15px; font-size:22px; font-weight:bold; text-align:center; color:var(--primary); border-top: 1px solid #333; padding-top:10px;"></div>
+        <button id="copyBtn" onclick="copyResult()" style="display:none; background:var(--blue); margin-top:15px; width:100%;">СКОПИРОВАТЬ ОТЧЕТ</button>
+    </div>
+</div>
+
+<script>
+    const v = document.getElementById('v');
+    const out = document.getElementById('logArea');
+    const resDiv = document.getElementById('finalResult');
+    const modal = document.getElementById('rulesModal');
+    let startT = null, lastT = null, count = 0, freezeCorr = 0;
+    let historyText = "";
+
+    function openRules() { modal.style.display = "block"; }
+    function closeRules() { modal.style.display = "none"; }
+
+    document.getElementById('vidFile').onchange = (e) => { if(e.target.files[0]) v.src = URL.createObjectURL(e.target.files[0]); };
+
+    function step(f) { 
+        v.currentTime += f * (1 / parseInt(document.getElementById('fps').value)); 
+        setTimeout(updateLiveFrames, 15); 
+    }
+
+    function updateLiveFrames() {
+        if (lastT === null) { document.getElementById('frameCounter').innerText = "0"; return; }
+        const f = Math.round((v.currentTime - lastT) * parseInt(document.getElementById('fps').value));
+        document.getElementById('frameCounter').innerText = Math.max(0, f);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        if(k === 'h' || k === 'р') modal.style.display === "block" ? closeRules() : openRules();
+        if(k === 's' || k === 'ы') setStart();
+        if(k === 'z' || k === 'я') adjustZero();
+        if(k === 'f' || k === 'а') addFreeze();
+        if(k === '.' || k === 'ю' || e.key === '>') step(1);
+        if(k === ',' || k === 'б' || e.key === '<') step(-1);
+        if(e.key === 'Enter') { e.preventDefault(); logSymbol(); }
+    });
+
+    function setStart() {
+        startT = v.currentTime; lastT = startT; count = 0; freezeCorr = 0; historyText = "";
+        resDiv.innerText = "";
+        document.getElementById('clickCounter').innerText = `(0/6)`;
+        out.innerHTML = `<div style="color:var(--primary);">Старт: 2-й кадр</div>`;
+        document.getElementById('copyBtn').style.display = 'none';
+        updateLiveFrames();
+    }
+
+    function adjustZero() {
+        if(!startT) return;
+        freezeCorr += 1;
+        out.innerHTML += `<div style="color:var(--accent); font-size:13px;">• Нолик в кармане (-1к)</div>`;
+    }
+
+    function addFreeze() {
+        if(!startT) return;
+        freezeCorr += 2; // Из 3 кадров делаем 1 (вычитаем 2 лишних)
+        out.innerHTML += `<div style="color:var(--blue); font-size:13px;">• Фриз (3к за 1к)</div>`;
+    }
+
+    function logSymbol() {
+        if(!startT) return;
+        const fps = parseInt(document.getElementById('fps').value);
+        const mult = fps === 60 ? 0.017 : 0.034;
+        
+        let diff = Math.round((v.currentTime - lastT) * fps);
+        let stepSec = (diff * mult).toFixed(3);
+        
+        count++;
+        let label = count <= 5 ? prompt(`Цифра ${count}:`, count) || count : "ентер";
+        
+        if(count === 1) out.innerHTML = "";
+        
+        let lineText = `${label} - ${diff} кадров - ${stepSec}`;
+        out.innerHTML += `<div class="line">${lineText}</div>`;
+        historyText += lineText + "\n";
+
+        lastT = v.currentTime;
+        document.getElementById('clickCounter').innerText = `(${count}/6)`;
+        updateLiveFrames();
+
+        if(count === 6) {
+            let totalF = Math.round((v.currentTime - startT) * fps) - freezeCorr;
+            let finalVal = (totalF * mult).toFixed(3);
+            resDiv.innerText = `Итог - ${finalVal}`;
+            startT = null;
+            document.getElementById('copyBtn').style.display = 'block';
+        }
+    }
+
+    function copyResult() {
+        navigator.clipboard.writeText(historyText + resDiv.innerText);
+        alert("Отчет скопирован!");
+    }
+
+    function reset() { 
+        startT = null; lastT = null; count = 0; freezeCorr = 0; historyText = "";
+        out.innerHTML = "Ожидание..."; resDiv.innerText = "";
+        document.getElementById('clickCounter').innerText = ""; 
+        document.getElementById('copyBtn').style.display = 'none'; 
+        updateLiveFrames(); 
+    }
+</script>
+</body>
+</html>
